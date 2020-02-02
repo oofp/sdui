@@ -1,0 +1,55 @@
+name:                sdui
+version:             0.1.1.0
+build-type:          Simple
+license:             OtherLicense
+license-file:        LICENSE
+author:              oofp
+maintainer:          oofp
+copyright:           2018-2020 oofp
+category:            Control
+extra-source-files:  README.md
+cabal-version:       >=1.10
+
+library
+  ghc-options:        -Wall 
+                      -fomit-interface-pragmas 
+                      -fno-warn-unticked-promoted-constructors 
+  exposed-modules:
+      SDUI.Data.SDUIData
+  other-modules:
+  hs-source-dirs:
+      src
+  default-extensions: RecordWildCards OverloadedStrings
+  build-depends:
+      base >=4.7 && <5
+    , protolude
+    , stm
+    , containers
+    , async
+    , text
+    , elm-bridge
+  default-language: Haskell2010
+  default-extensions:  OverloadedStrings, NoImplicitPrelude
+
+executable sdui-exe
+  ghc-options:        -Wall 
+  main-is: SDUIMain.hs
+  other-modules:
+  hs-source-dirs:
+      Examples
+  default-extensions: RecordWildCards OverloadedStrings
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , protolude  
+    , sdui
+    , stm
+    , async
+    , text
+    , aeson
+    , pipes
+    , pipes-concurrency
+    , webTools
+  default-language: Haskell2010
+  default-extensions:  OverloadedStrings, NoImplicitPrelude
+
