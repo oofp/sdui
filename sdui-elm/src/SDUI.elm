@@ -92,17 +92,37 @@ jsonEncButtonBarParams  val =
 
 
 
+type alias StaticBarParams  =
+   { staticBarNotice: String
+   }
+
+jsonDecStaticBarParams : Json.Decode.Decoder ( StaticBarParams )
+jsonDecStaticBarParams =
+   Json.Decode.succeed (\pstaticBarNotice -> {staticBarNotice = pstaticBarNotice}) |> custom (Json.Decode.string)
+
+jsonEncStaticBarParams : StaticBarParams -> Value
+jsonEncStaticBarParams  val =
+   Json.Encode.string val.staticBarNotice
+
+
 type UICard  =
     ButtonBar ButtonBarParams
+    | StaticBar StaticBarParams
 
 jsonDecUICard : Json.Decode.Decoder ( UICard )
 jsonDecUICard =
-    Json.Decode.lazy (\_ -> Json.Decode.map ButtonBar (jsonDecButtonBarParams))
-
+    let jsonDecDictUICard = Dict.fromList
+            [ ("ButtonBar", Json.Decode.lazy (\_ -> Json.Decode.map ButtonBar (jsonDecButtonBarParams)))
+            , ("StaticBar", Json.Decode.lazy (\_ -> Json.Decode.map StaticBar (jsonDecStaticBarParams)))
+            ]
+    in  decodeSumObjectWithSingleField  "UICard" jsonDecDictUICard
 
 jsonEncUICard : UICard -> Value
-jsonEncUICard (ButtonBar v1) =
-    jsonEncButtonBarParams v1
+jsonEncUICard  val =
+    let keyval v = case v of
+                    ButtonBar v1 -> ("ButtonBar", encodeValue (jsonEncButtonBarParams v1))
+                    StaticBar v1 -> ("StaticBar", encodeValue (jsonEncStaticBarParams v1))
+    in encodeSumObjectWithSingleField keyval val
 
 
 
@@ -155,4 +175,3 @@ jsonDecClientResp =
 jsonEncClientResp : ClientResp -> Value
 jsonEncClientResp (ClientResp v1 v2 v3) =
     Json.Encode.list identity [jsonEncEntryID v1, jsonEncReqID v2, jsonEncUIResp v3]
-

@@ -22,6 +22,12 @@ viewEntry respMsgFunc sduiEntry =
                 , text bbParams.bbPrompt
                 , div [] (List.map (viewBBButton respMsgFunc sduiEntry) bbParams.bbButtons) 
                 ] 
+        Just (StaticBar sbParams) -> 
+            div []
+                [ text sduiEntry.entryTitle
+                , br [] []
+                , text sbParams.staticBarNotice
+                ] 
 
 viewBBButton : (ClientResp -> msg) -> SDUIEntry -> Button -> Html msg
 viewBBButton respMsgFunc sduiEntry bbButton = 

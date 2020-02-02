@@ -16,6 +16,7 @@ library
                       -fno-warn-unticked-promoted-constructors 
   exposed-modules:
       SDUI.Data.SDUIData
+    , SDUI.Data.UIHelper 
   other-modules:
   hs-source-dirs:
       src

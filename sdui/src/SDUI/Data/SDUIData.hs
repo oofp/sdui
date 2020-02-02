@@ -21,8 +21,14 @@ data ButtonBarParams = ButtonBarParams
 
 deriveBoth defaultOptions ''ButtonBarParams
 
+data StaticBarParams = StaticBarParams
+  { staticBarNotice :: Text
+  } deriving (Show, Eq)
+deriveBoth defaultOptions ''StaticBarParams
+
 data UICard 
   = ButtonBar ButtonBarParams
+  | StaticBar StaticBarParams
   deriving (Show, Eq)
 
 deriveBoth defaultOptions ''UICard
@@ -63,6 +69,7 @@ printElm =
     , DefineElm (Proxy :: Proxy SessionID)
     , DefineElm (Proxy :: Proxy Button)
     , DefineElm (Proxy :: Proxy ButtonBarParams)
+    , DefineElm (Proxy :: Proxy StaticBarParams)
     , DefineElm (Proxy :: Proxy UICard)
     , DefineElm (Proxy :: Proxy UIResp)
     , DefineElm (Proxy :: Proxy ServerReq)
