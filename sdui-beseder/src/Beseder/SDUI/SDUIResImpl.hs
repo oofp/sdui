@@ -17,7 +17,6 @@ module Beseder.SDUI.SDUIResImpl where
 
 import           Protolude    
 import           Haskus.Utils.Variant
-import           Beseder.Base.Base
 import           Beseder.Base.Common
 import           Beseder.SDUI.SDUIRes
 import           Beseder.SDUI.SDUIContext 
@@ -27,19 +26,73 @@ import           Control.Concurrent.STM.TVar
 data UIData = UIData 
   { uiCxt :: SDUIContext
   , uiSessionID :: Text
-  , uiReqID :: Int
+  , uiReqID :: TVar Int
   }
 
 data UI = UI deriving Show
-data UIParams = UPParams SDUIContext EntryID
+data UIParams = UIParams SDUIContext EntryID EntryTitle
 
 instance TaskPoster m => SDUIRes m UI where
-  data  UIInitialized m UI = UIInitialized UIData 
-  data  ShowingDyn m UI = ShowingDyn UIData (TVar (Maybe (UIRespReceived m UI -> m ())))
+  data  UIInitialized m UI = UIInitialized UIData Text 
+  data  ShowingDyn m UI = ShowingDyn UIData 
   data  ShowingStatic m UI = ShowingStatic UIData
   data  UIRespReceived m UI = UIRespReceived UIData UIResp
   data  UIShutdown m UI = UIShutdown
-  newtype ResPar m UI = MkUI UIParams
+  data ResPar m UI = MkUI UIParams 
+
+  initUI (MkUI (UIParams ctx (EntryID entryID) (EntryTitle title))) = do 
+    reqID <- liftIO $ newTVarIO 0
+    return (UIInitialized (UIData ctx entryID reqID) title)
+  showDyn (ShowDyn uiCard) (UIInitialized uiData title) = do 
+    startSession uiData title uiCard
+    return $ variantFromValue (ShowingDyn uiData) 
+
+  showDynDyn (ShowDyn uiCard) (ShowingDyn uiData) = do
+    showUICard uiData uiCard
+    return $ variantFromValue (ShowingDyn uiData) 
+
+  showDynStatic (ShowDyn uiCard) (ShowingStatic uiData) = do
+    showUICard uiData uiCard
+    return $ variantFromValue (ShowingDyn uiData) 
+
+  showDynResp (ShowDyn uiCard) (UIRespReceived uiData _) = do
+    showUICard uiData uiCard
+    return $ variantFromValue (ShowingDyn uiData) 
+
+  showStatic (ShowStatic uiCard) (UIInitialized uiData title) = do 
+    startSession uiData title uiCard
+    return $ variantFromValue (ShowingStatic uiData) 
+
+  showStaticDyn (ShowStatic uiCard) (ShowingDyn uiData) = do
+    showUICard uiData uiCard
+    return $ variantFromValue (ShowingStatic uiData) 
+
+  showStaticStatic (ShowStatic uiCard) (ShowingStatic uiData) = do
+    showUICard uiData uiCard
+    return $ variantFromValue (ShowingStatic uiData) 
+
+  showStaticResp (ShowStatic uiCard) (UIRespReceived uiData _) = do
+    showUICard uiData uiCard
+    return $ variantFromValue (ShowingStatic uiData) 
+
+  uiTransition (ShowingDyn uiData) cb = do
+    let cxt = uiCxt uiData
+    taskPoster <- getTaskPoster 
+    liftIO $ setListener cxt (EntryID (uiSessionID uiData)) 
+      (\(ClientResp _entryID (ReqID respReqID) uiRsp) -> 
+        taskPoster $ do
+          reqID <- liftIO $ atomically $ readTVar (uiReqID uiData)
+          when (reqID == respReqID) (cb $ variantFromValue (UIRespReceived uiData uiRsp))
+          return True) 
+
+  shutdownUI ShutdownUI  (UIInitialized _uiData _) = return (variantFromValue UIShutdown)  
+  shutdownUIDyn ShutdownUI  (ShowingDyn uiData) = shutdownUIData uiData 
+  shutdownUIStatic ShutdownUI  (ShowingStatic uiData) = shutdownUIData uiData
+  shutdownUIResp ShutdownUI  (UIRespReceived uiData _) = shutdownUIData uiData
+
+  termShutdown UIShutdown = return ()
+
+  _uiResp (UIRespReceived _uiData uiRsp) = return uiRsp 
 
   {-
   initUI :: MkResDef m (ResPar m UI) (UIInitialized m UI)
@@ -69,3 +122,20 @@ instance TaskPoster m => SDUIRes m UI where
 type  UIDyn m = StShowingDyn m UI "ui"
 type  UIStatic m = StShowingStatic m UI "ui"
   
+startSession :: TaskPoster m => UIData -> Text -> UICard -> m ()
+startSession uiData title uiCard = liftIO $ do 
+  senderFunc (uiCxt uiData) (CreateEntry (EntryID (uiSessionID uiData)) (EntryTitle title) (ReqID 0) uiCard)  
+
+showUICard :: TaskPoster m => UIData -> UICard -> m ()
+showUICard uiData uiCard = liftIO $ do
+  nextReqID <- liftIO $ atomically $ do
+    reqID <- readTVar (uiReqID uiData)
+    let newReqID = reqID + 1
+    writeTVar (uiReqID uiData) newReqID
+    return newReqID
+  senderFunc (uiCxt uiData) (ReplaceEntry (EntryID (uiSessionID uiData)) (ReqID nextReqID) uiCard)  
+
+shutdownUIData :: MonadIO m => UIData -> m (V '[UIShutdown m UI])
+shutdownUIData uiData = liftIO $ do
+  removeListener (uiCxt uiData) (EntryID (uiSessionID uiData))
+  return (variantFromValue UIShutdown)  
