@@ -85,44 +85,6 @@ doorApp ctx = do
     try @("gt" :? IsTimerArmed) (doorHandler 5)
     termAndClearAllResources    
 
-{-
-doorHandler :: forall sp m. Int -> STransData m sp _ ()
-doorHandler doorTimeoutSec = 
-  handleEvents $ do
-    on @("fobReader" :? IsEventReceived) $ do 
-      invoke #fobReader AckEvent
-      openDoorIfClosed doorTimeoutSec       
-    on @("inDet" :? IsBinMonitorOn) $ do 
-      openDoorIfClosed doorTimeoutSec    
-    on @("doorTimer" :? IsTimerTriggered) $ do 
-      onOrElse @("inDet" :? IsBinMonitorOn :|| "outDet" :? IsBinMonitorOn)
-        (restartTimer doorTimeoutSec)
-        closeDoor        
-
-openDoorIfClosed :: Int -> STransData m sp _ ()     
-openDoorIfClosed doorTimeoutSec = do
-  on @("door" :? IsBinSwitchOff) $ do
-    invoke #door TurnOn
-    label #doorOpen
-    newRes #doorTimer TimerRes
-    invoke #doorTimer (StartTimer doorTimeoutSec)
-
-closeDoor :: STransData m sp _ () 
-closeDoor = do
-  clear #doorTimer   
-  invoke #door TurnOff
-  label #doorClosed
-
-restartTimer :: Int -> STransData m sp _ () 
-restartTimer doorTimeoutSec = do
-  clear #doorTimer
-  newRes #doorTimer TimerRes
-  invoke #doorTimer (StartTimer doorTimeoutSec)
-
-
-mkSTransDataTypeAny "doorHandler" "DoorHandler"
--}
-
 mkSTransDataTypeAny "doorApp" "DoorApp"
 
 -- :kind! Eval (DoorApp NoSplitter '[()])

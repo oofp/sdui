@@ -8,9 +8,9 @@ packages:
 # (e.g., acme-missiles-0.3)
 # - ref-tf-0.4.0.1
 extra-deps:
-- ../Beseder
+- ../../Beseder
 - ../sdui
-- ../webTools
+- ../../webTools
 - subdirs:
   - haskus-utils
   - haskus-utils-data
