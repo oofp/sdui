@@ -11,7 +11,7 @@ import            Pipes ((>->))
 import qualified  Pipes.Concurrent as PC
 import qualified  Pipes
 import            Control.Concurrent.STM.TChan
-import            UIApp
+import            EntranceDoor
 
 newClientHandler :: (SDUIContext -> IO ()) -> NewClientCallback ClientResp ServerReq
 newClientHandler appTask (input, output) = void $ async $ do
@@ -24,28 +24,6 @@ newClientHandler appTask (input, output) = void $ async $ do
   putStrLn ("Starting client listener"::Text)
   _ <- async $ Pipes.runEffect $ PC.fromInput input >-> clientRespHandler clientRespDistributer 
   putStrLn ("Client listener started"::Text)
-
-{-
-newClientHandler :: (SDUIContext -> IO ()) -> NewClientCallback ClientResp ServerReq
-newClientHandler appTask (input, output) = do
-  putStrLn ("New connection detected"::Text)
-  sendChan <- newTChanIO
-  let sendFunc :: ServerReq -> IO ()
-      sendFunc serverReq = do
-        liftIO $ putStrLn ("Sending server req"::Text)
-        atomically $ writeTChan sendChan serverReq
-  _ <- async $ Pipes.runEffect $ do (serverReqProducer sendChan)  >-> PC.toOutput output
-  clientRespDistributer <- initSDUIProc appTask sendFunc 
-  putStrLn ("Starting client listener"::Text)
-  _ <- async $ Pipes.runEffect $ PC.fromInput input >-> clientRespHandler clientRespDistributer 
-  putStrLn ("Client listener started"::Text)
-
-serverReqProducer :: TChan ServerReq -> Pipes.Producer ServerReq IO ()
-serverReqProducer chan = 
-  forever $ do
-    serverReq <- liftIO $ atomically $ readTChan chan
-    Pipes.yield serverReq
--}
 
 clientRespHandler :: (ClientResp -> IO ()) -> Pipes.Consumer ClientResp IO ()
 clientRespHandler respDistributer = forever $ do  
@@ -64,7 +42,7 @@ main = do
   cancel httpTask
 
 appLauncher :: SDUIContext -> IO () 
-appLauncher sduiCtx = runUiApp2 sduiCtx
+appLauncher sduiCtx = runUiDoor sduiCtx
 
 ---
 --main :: IO ()

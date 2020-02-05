@@ -5,11 +5,13 @@ import Protolude
 import SDUI.Data.SDUIData  
 import qualified StmContainers.Map as M
 
+-- allocated per client connection
 data SDUIContext = SDUIContext 
   { respListeners :: M.Map Text (ClientResp -> IO ())
   , senderFunc :: ServerReq -> IO ()      
   }
 
+-- this method called to dis
 clientHandler :: SDUIContext -> ClientResp -> IO ()
 clientHandler ctx resp@(ClientResp (EntryID entryID) _ _) = do
   lstMaybe <- atomically $ M.lookup (entryID) (respListeners ctx)
