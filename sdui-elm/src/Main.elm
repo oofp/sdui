@@ -7,7 +7,7 @@ import Browser
 import Cmd.Extra exposing (addCmd, addCmds, withCmd, withCmds, withNoCmd)
 import Dict exposing (Dict)
 import Html exposing (Html, a, button, div, h1, h4, input, p, span, text)
-import Html.Attributes exposing (checked, disabled, href, size, style, type_, value)
+import Html.Attributes exposing (class, checked, disabled, href, size, style, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Encode exposing (Value, encode)
 import Json.Decode exposing (decodeString, errorToString)
@@ -275,29 +275,27 @@ view model =
         isConnected =
             WebSocket.isConnected model.key model.state.websocket
     in
-    div
-        [ style "width" "40em"
-        , style "margin" "auto"
-        , style "margin-top" "1em"
-        , style "padding" "1em"
-        , style "border" "solid"
-        ]
-        [ h4 [] [ text "SDUI Example" ]
-        , p []
-            [ 
-            ]
-        , p []
-            [ b "url: "
-            , input
-                [ value model.url
-                , size 30
-                , disabled True
+    div [class "container"]
+        [ div [ class "panel panel-primary" ]
+            [ div [ class "panel-heading" ]
+                [ text "SDUI Example"]
+            , div [ class "panel-body" ]    
+                [ p []
+                    [ b "url: "
+                    , input
+                        [ value model.url
+                        , size 30
+                        , disabled True
+                        ]
+                        []
+                    , button [ onClick Connect,  disabled isConnected ]
+                            [ text "Connect" ]
+                    ]        
                 ]
-                []
-            , button [ onClick Connect,  disabled isConnected ]
-                    [ text "Connect" ]
-            ]
-        , viewSDUI model.sduiModel Send
+             ]
+        , viewSDUI model.sduiModel Send      
+        ]    
+        {-
         , p [] <|
             List.concat
                 [ [ b "Log:"
@@ -305,5 +303,5 @@ view model =
                   ]
                 , List.intersperse br (List.map text model.log)
                 ]
-        ]
+        -}        
 
