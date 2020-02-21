@@ -16,6 +16,12 @@ import PortFunnels exposing (FunnelDict, Handler(..), State)
 import SDUI exposing (..)
 import SDUIModel exposing (..)
 import SDUIView exposing (..)
+-- import Bootstrap.CDN as CDN
+import Bootstrap.Grid as Grid
+import Bootstrap.Card as Card
+import Bootstrap.Card.Block as Block
+import Task as Task
+import Time as Time
 
 {- This section contains boilerplate that you'll always need.
 
@@ -27,7 +33,6 @@ import SDUIView exposing (..)
    Those handler functions are the meat of your interaction with each
    funnel module.
 -}
-
 
 handlers : List (Handler Model Msg)
 handlers =
@@ -76,6 +81,7 @@ type alias Model =
     , state : State
     , key : String
     , error : Maybe String
+    , initConnect : Bool
     }
 
 
@@ -98,14 +104,27 @@ init _ =
             , state = PortFunnels.initialState
             , key = "socket"
             , error = Nothing
+            , initConnect = False
             }
     in model |> withNoCmd    
-        {-
-        |> withCmd -- connect on startup
-            (WebSocket.makeOpenWithKey model.key model.url
-                |> send model
-            )
-        -}
+       -- (model , fireInitMsg) 
+        --|> withCmd -- connect on startup
+        --    (WebSocket.makeOpenWithKey model.key model.url
+        --        |> send model
+        --    )
+
+fireInitMsg : Cmd Msg
+fireInitMsg = Task.perform (\_ -> Connect) Time.now
+
+connect : Model -> (Model , Cmd Msg)
+connect model = 
+            { model
+                | log = ("Connecting to " ++ model.url) :: model.log
+            }
+                |> withCmd
+                    (WebSocket.makeOpenWithKey model.key model.url
+                        |> send model
+                    )
 
 -- UPDATE
 
@@ -148,7 +167,16 @@ update msg model =
                     { model | error = Just error } |> withNoCmd
 
                 Ok res ->
-                    res
+                    let (mdl, cmd) = res
+                    in 
+                        if mdl.initConnect
+                            then (mdl,cmd)
+                            else 
+                                let newModel = {mdl | initConnect = True}
+                                in (newModel, 
+                                    Cmd.batch [WebSocket.makeOpenWithKey model.key model.url
+                                                    |> send newModel , cmd])
+                                             
 
 
 send : Model -> WebSocket.Message -> Cmd Msg
@@ -275,26 +303,37 @@ view model =
         isConnected =
             WebSocket.isConnected model.key model.state.websocket
     in
-    div [class "container"]
+        Grid.container []
+            (( Card.config [] 
+                |> Card.headerH6 [class "bg-success text-white"] [text "SDUIExample"]
+                |> Card.block []
+                    [ Block.custom 
+                        ( p []
+                            [ b "url: "
+                            , input
+                                [ value model.url
+                                , size 30
+                                , disabled True
+                                ]
+                                []
+                            , button [ onClick Connect,  disabled isConnected ]
+                                    [ text "Connect" ]
+                            ]        
+                        )
+                    ]
+                |> Card.view
+             ) :: (viewSDUI model.sduiModel Send))        
+    -- div [class "container"]
+    {-
         [ div [ class "panel panel-primary" ]
             [ div [ class "panel-heading" ]
                 [ text "SDUI Example"]
             , div [ class "panel-body" ]    
-                [ p []
-                    [ b "url: "
-                    , input
-                        [ value model.url
-                        , size 30
-                        , disabled True
-                        ]
-                        []
-                    , button [ onClick Connect,  disabled isConnected ]
-                            [ text "Connect" ]
-                    ]        
-                ]
              ]
-        , viewSDUI model.sduiModel Send      
-        ]    
+        , 
+        ] 
+        -}
+
         {-
         , p [] <|
             List.concat

@@ -6,10 +6,13 @@ import Dict exposing (Dict)
 import Html exposing (Html, a, button, div, h1, input, p, span, text, br)
 import Html.Events exposing (onClick, onInput)
 import Html.Attributes exposing (attribute, class, checked, disabled, href, size, style, type_, value)
+import Bootstrap.Grid as Grid
+import Bootstrap.Card as Card
+import Bootstrap.Card.Block as Block
 
-viewSDUI : SDUIModel -> (ClientResp -> msg) -> Html msg
+viewSDUI : SDUIModel -> (ClientResp -> msg) -> List (Html msg)
 viewSDUI sduiModel respMsgFunc = 
-    div [] (List.map (viewEntry respMsgFunc) (Dict.values sduiModel))
+    List.map (viewEntry respMsgFunc) (Dict.values sduiModel)
 
 {-
 viewEntry : (ClientResp -> msg) -> SDUIEntry -> Html msg
@@ -37,11 +40,12 @@ viewBBButton respMsgFunc sduiEntry bbButton =
 
 viewEntry : (ClientResp -> msg) -> SDUIEntry -> Html msg
 viewEntry respMsgFunc sduiEntry = 
-        div [ class "panel panel-primary" ]
-            [ div [ class "panel-heading" ]
-                [ text sduiEntry.entryTitle]
-            , div [ class "panel-body" ] [viewEntryContent respMsgFunc sduiEntry]
-            ]   
+        Card.config [Card.light] 
+            |> Card.headerH6 [class "bg-primary text-white"] [text sduiEntry.entryTitle]
+            |> Card.block [] 
+                [Block.custom  (viewEntryContent respMsgFunc sduiEntry)]
+            |> Card.view 
+                    
 
 viewEntryContent : (ClientResp -> msg) -> SDUIEntry -> Html msg
 viewEntryContent respMsgFunc sduiEntry = 
