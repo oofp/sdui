@@ -139,4 +139,19 @@ showButtons p txts = ShowDyn (mkBtnBar p txts)
 
 showNotice :: Text -> ShowStatic
 showNotice txt = ShowStatic (mkStaticBar txt)
+---
+
+type FromUIResp sts = CreateFrom UIResp sts  
+
+
+transFromUIResp :: 
+  ( FromUIResp (Var ys)
+  , TaskPoster m
+  ) => UICard -> (V ys -> m ()) -> m ()
+transFromUIResp uiCard respToStates cbFunc =
+  void $ next uiCard (\uiRespReceived -> do
+      let index = uiRespIndex uiCard uiRespReceived
+          v_ys = unVar $ createFrom (IndexedPar index uiRespReceived)
+      cbFunc v_ys
+      return True)
 

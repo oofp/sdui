@@ -17,6 +17,10 @@ library
   exposed-modules:
       SDUI.Data.SDUIData
     , SDUI.Data.UIHelper 
+    , SDUI.Data.Button 
+    , SDUI.Data.Form 
+    , SDUI.Data.FormRes 
+    , SDUI.Data.Style
   other-modules:
   hs-source-dirs:
       src

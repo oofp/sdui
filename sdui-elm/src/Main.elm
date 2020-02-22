@@ -16,12 +16,13 @@ import PortFunnels exposing (FunnelDict, Handler(..), State)
 import SDUI exposing (..)
 import SDUIModel exposing (..)
 import SDUIView exposing (..)
--- import Bootstrap.CDN as CDN
+import Bootstrap.CDN as CDN
 import Bootstrap.Grid as Grid
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
 import Task as Task
 import Time as Time
+import Bootstrap.Spinner as Spinner
 
 {- This section contains boilerplate that you'll always need.
 
@@ -71,6 +72,7 @@ cmdPort =
 defaultUrl : String
 defaultUrl =
     "ws://localhost:8072"
+    -- "ws://192.168.2.26:8072"
 
 
 type alias Model =
@@ -128,10 +130,12 @@ connect model =
 
 -- UPDATE
 
+
 type Msg
     = Send ClientResp
     | Process Value
     | Connect
+    | UpdateForm UpdateFormParams
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -176,7 +180,7 @@ update msg model =
                                 in (newModel, 
                                     Cmd.batch [WebSocket.makeOpenWithKey model.key model.url
                                                     |> send newModel , cmd])
-                                             
+        UpdateForm updateParams -> {model | sduiModel = updateForm updateParams model.sduiModel} |> withNoCmd                                       
 
 
 send : Model -> WebSocket.Message -> Cmd Msg
@@ -296,7 +300,6 @@ docp : String -> Html Msg
 docp string =
     p [] [ text string ]
 
-
 view : Model -> Html Msg
 view model =
     let
@@ -304,25 +307,27 @@ view model =
             WebSocket.isConnected model.key model.state.websocket
     in
         Grid.container []
-            (( Card.config [] 
-                |> Card.headerH6 [class "bg-success text-white"] [text "SDUIExample"]
-                |> Card.block []
-                    [ Block.custom 
-                        ( p []
-                            [ b "url: "
-                            , input
-                                [ value model.url
-                                , size 30
-                                , disabled True
-                                ]
-                                []
-                            , button [ onClick Connect,  disabled isConnected ]
-                                    [ text "Connect" ]
-                            ]        
-                        )
-                    ]
-                |> Card.view
-             ) :: (viewSDUI model.sduiModel Send))        
+            (CDN.stylesheet ::
+                (( Card.config [] 
+                    |> Card.headerH6 [class "bg-success text-white"] [text "SDUIExample"]
+                    |> Card.block []
+                        [ Block.custom 
+                            ( p []
+                                [ b "url: "
+                                , input
+                                    [ value model.url
+                                    , size 30
+                                    , disabled False
+                                    ]
+                                    []
+                                , button [ onClick Connect,  disabled isConnected ]
+                                        [ text "Connect" ]
+                                ]        
+                            )
+                        ]
+                    |> Card.view
+                ) :: viewSDUI model.sduiModel Send UpdateForm)        
+            )    
     -- div [class "container"]
     {-
         [ div [ class "panel panel-primary" ]

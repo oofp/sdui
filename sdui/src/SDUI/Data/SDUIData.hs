@@ -3,16 +3,14 @@
 module SDUI.Data.SDUIData where 
 
 import Protolude
+import SDUI.Data.Style
+import SDUI.Data.Button
+import SDUI.Data.Form
+import SDUI.Data.FormRes
 
 import Elm.Derive
 import Elm.Module
 
-data Button = Button
-  { btnId :: Text
-  , btnCaption :: Text
-  } deriving (Show, Eq)
-
-deriveBoth defaultOptions ''Button
 
 data ButtonBarParams = ButtonBarParams
   { bbPrompt :: Text
@@ -29,12 +27,14 @@ deriveBoth defaultOptions ''StaticBarParams
 data UICard 
   = ButtonBar ButtonBarParams
   | StaticBar StaticBarParams
+  | Form FormParams
   deriving (Show, Eq)
 
 deriveBoth defaultOptions ''UICard
 
 data UIResp 
   = ButtonClickedResp Text -- return btnID
+  | FormResp FormRespParams -- return btnID
   deriving (Show, Eq)
 
 deriveBoth defaultOptions ''UIResp
@@ -67,6 +67,20 @@ printElm =
     , DefineElm (Proxy :: Proxy ReqID)
     , DefineElm (Proxy :: Proxy EntryTitle)
     , DefineElm (Proxy :: Proxy SessionID)
+    , DefineElm (Proxy :: Proxy Style)
+    , DefineElm (Proxy :: Proxy InputType)
+    , DefineElm (Proxy :: Proxy SelectItem)
+    , DefineElm (Proxy :: Proxy FormGroupItem)
+    , DefineElm (Proxy :: Proxy FormGroupParams)
+    , DefineElm (Proxy :: Proxy CheckBoxParams)
+    , DefineElm (Proxy :: Proxy RadioItem)
+    , DefineElm (Proxy :: Proxy RadioListParams)
+    , DefineElm (Proxy :: Proxy FormEntry)
+    , DefineElm (Proxy :: Proxy FormItem)
+    , DefineElm (Proxy :: Proxy FormParams)
+    , DefineElm (Proxy :: Proxy FormItemRes)
+    , DefineElm (Proxy :: Proxy FormEntryRes)
+    , DefineElm (Proxy :: Proxy FormRespParams)
     , DefineElm (Proxy :: Proxy Button)
     , DefineElm (Proxy :: Proxy ButtonBarParams)
     , DefineElm (Proxy :: Proxy StaticBarParams)
