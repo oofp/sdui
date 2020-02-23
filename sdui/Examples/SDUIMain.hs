@@ -64,3 +64,12 @@ main = do
   putStrLn ("Press [Enter] to exit"::Text)
   void getLine
   cancel httpTask
+
+
+{-
+readClientResp :: Pipes.Pipe Integer (Integer, Integer) IO ()
+readClientResp = do
+  n <- Pipes.await
+  let n1 = (n*2, n+2)
+  Pipes.yield n1
+-}
