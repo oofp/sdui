@@ -25,6 +25,7 @@ library
                      , Beseder.SDUI.Resources.UIBinSwitch
                      , Beseder.SDUI.UIResources.InputRes
                      , Beseder.SDUI.UIResources.InputResImpl
+                     , Beseder.SDUI.Env.SDUIEnv
   other-modules:       
   build-depends:       base >= 4.7 && < 5
                      , protolude
@@ -45,6 +46,9 @@ library
                      , beseder
                      , sdui
                      , pretty-simple
+                     , webTools
+                     , pipes
+                     , pipes-concurrency
   default-language:    Haskell2010
   default-extensions:  OverloadedStrings, NoImplicitPrelude, TypeApplications, OverloadedLabels
 

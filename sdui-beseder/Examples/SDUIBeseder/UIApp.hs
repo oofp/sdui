@@ -14,7 +14,9 @@
 {-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE TemplateHaskell        #-}
+
 {-# OPTIONS_GHC -fomit-interface-pragmas #-}
+{-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
 module  UIApp where
 
@@ -30,7 +32,7 @@ import           SDUI.Data.SDUIData
 import           Beseder.SDUI.SDUIRes
 import           Beseder.SDUI.SDUIResImpl
 import           Beseder.SDUI.SDUIHelper
-import           GHC.Exts (Any)    
+-- import           GHC.Exts (Any)    
 
 helloUiRes :: SDUIContext -> Beseder.SDUI.SDUIResImpl.ResPar TaskQ UI
 helloUiRes ctx = MkUI (UIParams ctx (EntryID "ui1") (EntryTitle "Hello UI"))
@@ -57,11 +59,12 @@ uiApp ctx = do
 
 mkSTransDataTypeAny "uiApp" "UiApp"
 type UiRes = Eval (UiApp NoSplitter '[()])
+
+runUiApp :: SDUIContext -> IO ()
 runUiApp ctx = runAsyncData $ uiApp ctx
 
 uiRes :: Text -> SDUIContext -> Beseder.SDUI.SDUIResImpl.ResPar TaskQ UI
 uiRes name ctx = MkUI (UIParams ctx (EntryID name) (EntryTitle name))
-
 
 uiApp2 :: SDUIContext -> STransData TaskQ NoSplitter _ () 
 uiApp2 ctx = while $ do        
@@ -83,4 +86,6 @@ uiApp2 ctx = while $ do
 
 mkSTransDataTypeAny "uiApp2" "UiApp2"
 type UiRes2 = Eval (UiApp2 NoSplitter '[()])
+
+runUiApp2 :: SDUIContext -> IO ()
 runUiApp2 ctx = runAsyncData $ uiApp2 ctx

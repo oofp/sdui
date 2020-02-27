@@ -37,7 +37,6 @@ import           Beseder.Base.ControlData
 import           Beseder.Resources.Timer
 import           Beseder.Resources.Monitor
 import           Beseder.Resources.Switch
-import           Beseder.Resources.Comm
 import           Beseder.Resources.Monitor.EventMonitorRes 
 import           Beseder.SDUI.Resources.UIEvMonitor            
 import           Beseder.SDUI.Resources.UIBinMonitor            

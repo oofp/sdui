@@ -18,20 +18,9 @@
 module  UIAppTest where
 
 import           Protolude                    hiding (Type)
-import           Beseder.Base.Common
-import           Beseder.Misc.Misc
-import           Beseder.Resources.Timer
 import           Data.String 
-import           Beseder.SDUI.SDUIContext
-import           SDUI.Data.SDUIData
-import           Beseder.SDUI.SDUIRes
-import           Beseder.SDUI.SDUIResImpl
-import           Beseder.SDUI.SDUIHelper
-import           GHC.Exts (Any)    
-import           UIApp
 
 import           Language.Haskell.TH
-import           Language.Haskell.TH.Quote
 
 reifyValue :: String -> Q (Maybe Info) -- Q [Dec]
 reifyValue valName = do
