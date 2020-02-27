@@ -16,8 +16,6 @@
 module Beseder.SDUI.Resources.UIBinMonitor  where
 
 import           Protolude    
-import           Haskus.Utils.Variant
-import           Beseder.Base.Base
 import           Beseder.Base.Common
 import           Beseder.SDUI.SDUIResImpl
 import           Beseder.SDUI.SDUIRes
@@ -27,8 +25,11 @@ import           Beseder.Resources.Monitor
 
 data UIBinMonitor = UIBinMonitor deriving (Eq, Show)
 
+monitorOnUI :: ShowDyn
 monitorOnUI = showButtons "Currently ON" ["Click to switch off"]
+monitorOffUI :: ShowDyn
 monitorOffUI = showButtons "Currently OFF" ["Click to switch on"]
+monitorStoppedUI :: ShowStatic
 monitorStoppedUI = showNotice "Monitor stopped"
 
 instance (TaskPoster m, SDUIRes m UI) => BinaryMonitorProv m UIBinMonitor where

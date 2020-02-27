@@ -34,23 +34,18 @@ module  EntranceDoorHnd where
 import           Protolude                    hiding (Product, Any, handle, return, gets, lift, liftIO,
                                                (>>), (>>=), forever, until,try,on)
 import           Beseder.Base.ControlData
-import           Beseder.Base.Common                                               
 import           Beseder.Resources.Timer
 import           Beseder.Resources.Monitor
 import           Beseder.Resources.Switch
-import           Beseder.Resources.Comm
 import           Beseder.Resources.Monitor.EventMonitorRes 
-import           Beseder.SDUI.Resources.UIEvMonitor            
-import           Beseder.SDUI.Resources.UIBinMonitor            
-import           Beseder.SDUI.Resources.UIBinSwitch            
 import           Data.String 
-import           Beseder.Misc.Misc
-import           Beseder.SDUI.SDUIContext
-import           SDUI.Data.SDUIData
-import           Beseder.SDUI.SDUIRes
-import           Beseder.SDUI.SDUIResImpl
-import           Beseder.SDUI.SDUIHelper
 import           GHC.Exts (Any)    
+
+type InvalidConditions =
+  ("doorTimer" :? IsTimerTriggered 
+  :|| ("door" :? IsBinSwitchOn :&& (Not ("doorTimer" :? IsTimerArmed))) 
+  :|| ("door" :? IsBinSwitchOff :&& ("inDet" :? IsBinMonitorOn)) 
+  )
 
 doorHandler :: forall sp m. Int -> STransData m sp _ ()
 doorHandler doorTimeoutSec = 
@@ -64,20 +59,22 @@ doorHandler doorTimeoutSec =
       onOrElse @("inDet" :? IsBinMonitorOn :|| "outDet" :? IsBinMonitorOn)
         (restartTimer doorTimeoutSec)
         closeDoor        
+    label #allStates
+    assert @(Not InvalidConditions)    
 
 openDoorIfClosed :: Int -> STransData m sp _ ()     
 openDoorIfClosed doorTimeoutSec = do
   on @("door" :? IsBinSwitchOff) $ do
-    invoke #door TurnOn
-    -- label #doorOpen
+    invoke #door TurnOn -- forget to open to demo assertion
     newRes #doorTimer TimerRes
     invoke #doorTimer (StartTimer doorTimeoutSec)
+    --invoke #door TurnOn -- to demo validation
 
 closeDoor :: STransData m sp _ () 
 closeDoor = do
   clear #doorTimer   
   invoke #door TurnOff
-  -- label #doorClosed
+  label #doorClosed
 
 restartTimer :: Int -> STransData m sp _ () 
 restartTimer doorTimeoutSec = do
@@ -88,10 +85,11 @@ restartTimer doorTimeoutSec = do
 
 mkSTransDataTypeAny "doorHandler" "DoorHandler"
 -- :kind!  ValidateSteps '[] DoorHandler NoSplitter InitialState
--- :kind! StateDiagramSym  DoorHandler InitialState 
+-- :kind! StateDiagramSym  DoorHandler InitialState
+-- :kind! ShowLabel' "doorClosed" DoorHandler NoSplitter InitialState 
+-- :kind! ShowLabel' "allState" DoorHandler NoSplitter InitialState 
 
 
-type Running = ("gt" :? IsTimerArmed)
 type InitialState = InitState Any Any Any Any
 
 type InitState m doorSw monRes fobMon
@@ -100,3 +98,4 @@ type InitState m doorSw monRes fobMon
           ( StBinMonitorOff m monRes "outDet",  
           ( StWaitForEvent  m fobMon "fobReader")))) 
        ]
+

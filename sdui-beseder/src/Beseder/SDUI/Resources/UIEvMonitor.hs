@@ -16,8 +16,6 @@
 module Beseder.SDUI.Resources.UIEvMonitor  where
 
 import           Protolude    
-import           Haskus.Utils.Variant
-import           Beseder.Base.Base
 import           Beseder.Base.Common
 import           Beseder.SDUI.SDUIResImpl
 import           Beseder.SDUI.SDUIRes
@@ -26,8 +24,11 @@ import           Beseder.Resources.Monitor.EventMonitorRes
 
 data UIEvMonitor = UIEvMonitor deriving (Eq, Show)
 
+monitorWaitingUI :: ShowDyn
 monitorWaitingUI = showButtons "Monitor events" ["Click to trigger event"]
+monitorStoppedUI :: ShowStatic
 monitorStoppedUI = showNotice "Monitor stopped"
+monitorReceivedUI :: ShowStatic
 monitorReceivedUI = showNotice "Wait for ack"
 
 instance (TaskPoster m, SDUIRes m UI) => EventMonitorProv m UIEvMonitor where

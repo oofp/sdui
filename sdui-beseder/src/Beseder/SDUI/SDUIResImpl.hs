@@ -34,8 +34,8 @@ data UIParams = UIParams SDUIContext EntryID EntryTitle
 
 instance TaskPoster m => SDUIRes m UI where
   data  UIInitialized m UI = UIInitialized UIData Text 
-  data  ShowingDyn m UI = ShowingDyn UIData 
-  data  ShowingStatic m UI = ShowingStatic UIData
+  data  ShowingDyn m UI = ShowingDyn UIData UICard
+  data  ShowingStatic m UI = ShowingStatic UIData 
   data  UIRespReceived m UI = UIRespReceived UIData UIResp
   data  UIShutdown m UI = UIShutdown
   data ResPar m UI = MkUI UIParams 
@@ -45,25 +45,25 @@ instance TaskPoster m => SDUIRes m UI where
     return (UIInitialized (UIData ctx entryID reqID) title)
   showDyn (ShowDyn uiCard) (UIInitialized uiData title) = do 
     startSession uiData title uiCard
-    return $ variantFromValue (ShowingDyn uiData) 
+    return $ variantFromValue (ShowingDyn uiData uiCard) 
 
-  showDynDyn (ShowDyn uiCard) (ShowingDyn uiData) = do
+  showDynDyn (ShowDyn uiCard) (ShowingDyn uiData _) = do
     showUICard uiData uiCard
-    return $ variantFromValue (ShowingDyn uiData) 
+    return $ variantFromValue (ShowingDyn uiData uiCard) 
 
   showDynStatic (ShowDyn uiCard) (ShowingStatic uiData) = do
     showUICard uiData uiCard
-    return $ variantFromValue (ShowingDyn uiData) 
+    return $ variantFromValue (ShowingDyn uiData uiCard) 
 
   showDynResp (ShowDyn uiCard) (UIRespReceived uiData _) = do
     showUICard uiData uiCard
-    return $ variantFromValue (ShowingDyn uiData) 
+    return $ variantFromValue (ShowingDyn uiData uiCard) 
 
   showStatic (ShowStatic uiCard) (UIInitialized uiData title) = do 
     startSession uiData title uiCard
     return $ variantFromValue (ShowingStatic uiData) 
 
-  showStaticDyn (ShowStatic uiCard) (ShowingDyn uiData) = do
+  showStaticDyn (ShowStatic uiCard) (ShowingDyn uiData _) = do
     showUICard uiData uiCard
     return $ variantFromValue (ShowingStatic uiData) 
 
@@ -75,7 +75,7 @@ instance TaskPoster m => SDUIRes m UI where
     showUICard uiData uiCard
     return $ variantFromValue (ShowingStatic uiData) 
 
-  uiTransition (ShowingDyn uiData) cb = do
+  uiTransition (ShowingDyn uiData _) cb = do
     let cxt = uiCxt uiData
     taskPoster <- getTaskPoster 
     liftIO $ setListener cxt (EntryID (uiSessionID uiData)) 
@@ -86,7 +86,7 @@ instance TaskPoster m => SDUIRes m UI where
           return True) 
 
   shutdownUI ShutdownUI  (UIInitialized _uiData _) = return (variantFromValue UIShutdown)  
-  shutdownUIDyn ShutdownUI  (ShowingDyn uiData) = shutdownUIData uiData 
+  shutdownUIDyn ShutdownUI  (ShowingDyn uiData _) = shutdownUIData uiData 
   shutdownUIStatic ShutdownUI  (ShowingStatic uiData) = shutdownUIData uiData
   shutdownUIResp ShutdownUI  (UIRespReceived uiData _) = shutdownUIData uiData
 
@@ -137,5 +137,6 @@ showUICard uiData uiCard = liftIO $ do
 
 shutdownUIData :: MonadIO m => UIData -> m (V '[UIShutdown m UI])
 shutdownUIData uiData = liftIO $ do
+  senderFunc (uiCxt uiData) (DeleteEntry (EntryID (uiSessionID uiData)))  
   removeListener (uiCxt uiData) (EntryID (uiSessionID uiData))
   return (variantFromValue UIShutdown)  

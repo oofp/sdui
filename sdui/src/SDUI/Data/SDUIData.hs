@@ -11,7 +11,6 @@ import SDUI.Data.FormRes
 import Elm.Derive
 import Elm.Module
 
-
 data ButtonBarParams = ButtonBarParams
   { bbPrompt :: Text
   , bbButtons :: [Button]
@@ -36,6 +35,9 @@ data UIResp
   = ButtonClickedResp Text -- return btnID
   | FormResp FormRespParams -- return btnID
   deriving (Show, Eq)
+
+emptyUIResp :: UIResp
+emptyUIResp = FormResp (FormRespParams "" [])
 
 deriveBoth defaultOptions ''UIResp
 

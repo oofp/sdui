@@ -16,8 +16,6 @@
 module Beseder.SDUI.Resources.UIBinSwitch  where
 
 import           Protolude    
-import           Haskus.Utils.Variant
-import           Beseder.Base.Base
 import           Beseder.Base.Common
 import           Beseder.SDUI.SDUIResImpl
 import           Beseder.SDUI.SDUIRes
@@ -27,7 +25,9 @@ import           Beseder.Resources.Switch
 
 data UIBinSwitch = UIBinSwitch deriving (Eq, Show)
 
+switchOnUI :: ShowStatic
 switchOnUI = showNotice "Open"
+switchOffUI :: ShowStatic
 switchOffUI = showNotice "Closed"
 
 instance (TaskPoster m, SDUIRes m UI) => BinarySwitchProv m UIBinSwitch where

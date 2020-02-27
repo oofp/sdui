@@ -64,7 +64,7 @@ uiRes name ctx = MkUI (UIParams ctx (EntryID name) (EntryTitle name))
 
 
 uiApp2 :: SDUIContext -> STransData TaskQ NoSplitter _ () 
-uiApp2 ctx = do        
+uiApp2 ctx = while $ do        
   newRes #ui1 (uiRes "Screen 1" ctx) 
   newRes #ui2 (uiRes "Screen 2" ctx)
   newRes #t1 TimerRes                    
@@ -78,6 +78,8 @@ uiApp2 ctx = do
   clear #ui1  
   clear #ui2  
   clear #t1
+  liftIO $ putStrLn ("uiApp2 completed" :: Text)
+  return True
 
 mkSTransDataTypeAny "uiApp2" "UiApp2"
 type UiRes2 = Eval (UiApp2 NoSplitter '[()])

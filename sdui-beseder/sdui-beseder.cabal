@@ -23,6 +23,8 @@ library
                      , Beseder.SDUI.Resources.UIEvMonitor
                      , Beseder.SDUI.Resources.UIBinMonitor
                      , Beseder.SDUI.Resources.UIBinSwitch
+                     , Beseder.SDUI.UIResources.InputRes
+                     , Beseder.SDUI.UIResources.InputResImpl
   other-modules:       
   build-depends:       base >= 4.7 && < 5
                      , protolude
@@ -72,6 +74,29 @@ executable sdui-entrance-door
   hs-source-dirs:      ./Examples/SDUIEntranceDoor
   main-is:             Main.hs
   other-modules:       
+  ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-T -dshow-passes -fomit-interface-pragmas -fprint-potential-instances
+  build-depends:       base
+                    , beseder
+                    , sdui
+                    , sdui-beseder
+                    , text
+                    , mtl
+                    , stm
+                    , protolude
+                    , haskus-utils
+                    , bytestring
+                    , webTools
+                    , pipes
+                    , pipes-concurrency
+
+  default-language:    Haskell2010
+  default-extensions:  OverloadedStrings, NoImplicitPrelude
+
+
+executable sdui-input-loop
+  hs-source-dirs:      ./Examples/InputLoop
+  main-is:             Main.hs
+  other-modules:       InputLoopApp
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-T -dshow-passes -fomit-interface-pragmas -fprint-potential-instances
   build-depends:       base
                     , beseder

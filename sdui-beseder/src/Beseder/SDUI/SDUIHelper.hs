@@ -18,7 +18,9 @@
 {-# LANGUAGE PartialTypeSignatures  #-}
 {-# LANGUAGE PolyKinds              #-}
 {-# LANGUAGE TypeApplications       #-}
+{-# LANGUAGE TypeOperators       #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE FunctionalDependencies #-}
 
 module Beseder.SDUI.SDUIHelper 
   ( transFromUI
@@ -29,6 +31,20 @@ module Beseder.SDUI.SDUIHelper
   , termFromUI
   , showButtons
   , showNotice
+  --
+  , UIDynData
+  , UIStaticData
+  , UIStData (..)
+  , GetStCard (..)
+  , GetFormEntries (..)
+  , ReqUI1 (..)
+  , transFromUIDynData
+  , newResFromUIData
+  , uiTrans
+  , termUI
+  , getTextFromResp 
+  , getNumFromResp 
+  , getBoolFromResp 
   ) where
 
 import           Protolude
@@ -39,9 +55,13 @@ import qualified Beseder.SDUI.SDUIRes as SDUIRes
 import           Beseder.SDUI.SDUIRes
 -- import           Beseder.SDUI.SDUIContext
 import           SDUI.Data.SDUIData 
+import           SDUI.Data.Form 
+import           SDUI.Data.Button
+import           SDUI.Data.Style
 import           SDUI.Data.UIHelper
 import           Haskus.Utils.Variant
 import           Data.Coerce
+import           Data.Text
 
 uiResParams :: (Coercible resParams UIParams, Monad m) => resParams -> m (SDUIRes.ResPar m UI) -- (CardReaderIdle m UICardReader)
 uiResParams resParams = do
@@ -139,19 +159,191 @@ showButtons p txts = ShowDyn (mkBtnBar p txts)
 
 showNotice :: Text -> ShowStatic
 showNotice txt = ShowStatic (mkStaticBar txt)
----
 
-type FromUIResp sts = CreateFrom UIResp sts  
+--
+class GetFormEntries st where
+  getFormEntris :: Proxy st -> [FormEntry] --return entries that is needed to collect required data
+  getFormEntris _ = []
 
+class GetStCard st where
+  getStCard :: Proxy st -> UICard
 
-transFromUIResp :: 
-  ( FromUIResp (Var ys)
+instance GetStCard' st (StateDataTrans st) => GetStCard st where 
+  getStCard px_st = getStCard' px_st (Proxy @(StateDataTrans st))
+  
+class GetStCard' st (stTrans :: StateTransKind) where
+  getStCard' :: Proxy st -> Proxy stTrans -> UICard
+
+instance GetDynCard st => GetStCard' st 'Dynamic where
+  getStCard' px_st _stTrans = getDynCard px_st
+
+instance KnownSymbol (StateTitle st) => GetStCard' st 'Static where
+  getStCard' _px_st _stTrans = mkStaticBar (pack $ symbolVal (Proxy @(StateTitle st))) 
+
+class GetDynCard st where
+  getDynCard :: Proxy st -> UICard
+
+instance (StateDataTrans st ~ 'Dynamic, GetStatesForm (NextDataStates st)) => GetDynCard st where
+  getDynCard _p_st = Form $ getStatesForm (Proxy @(NextDataStates st))     
+
+class GetStatesForm (sts :: [*]) where
+  getStatesForm :: Proxy sts ->  FormParams
+
+instance GetStatesForm '[] where
+  getStatesForm _px_sts = mempty
+
+instance (GetFormEntries st , KnownSymbol (StateTitle st), GetStatesForm sts) => GetStatesForm (st ': sts) where
+  getStatesForm _px_sts = 
+    let stName :: Text
+        stName = pack $ symbolVal (Proxy @(StateTitle st))
+        entries = getFormEntris (Proxy @st)
+        resps = respForEntries entries
+        btn = [Button stName stName Info]
+    in (FormParams entries resps btn) <> getStatesForm (Proxy @sts) 
+
+data UIStData dynOrStatic = UIStData 
+  { curUIState :: dynOrStatic
+  , curUICard :: UICard 
+  , prevUIResp :: UIResp
+  }
+
+type UIDynData m = UIStData (UIDyn m)
+type UIStaticData m = UIStData (UIStatic m)
+
+class HandleUIResp m st where
+  handleUIResp :: UIDynData m -> StUIRespReceived m UI "ui" -> m st
+
+instance HandleUIResp' m st (StateDataTrans st) => HandleUIResp m st where
+  handleUIResp  = handleUIResp' (Proxy @(StateDataTrans st)) 
+  
+class (stTrans ~ StateDataTrans st) => HandleUIResp' m st (stTrans :: StateTransKind) where
+  handleUIResp' :: Proxy stStrans -> UIDynData m -> StUIRespReceived m UI "ui" -> m st
+
+instance (TaskPoster m, GetStCard st, Coercible (UIDynData m) st, StateDataTrans st ~ 'Dynamic) => HandleUIResp' m st 'Dynamic where
+  handleUIResp' _stStrans (UIStData _ _uiCard _) uiRespRcvd = do
+    uiRsp <- uiResp uiRespRcvd
+    let uiCard = getStCard (Proxy @st)
+    v_newUIState <- request (ShowDyn uiCard) uiRespRcvd
+    let newUIState = variantToValue v_newUIState
+    return $ coerce $ UIStData newUIState uiCard uiRsp
+
+instance (TaskPoster m, GetStCard st, Coercible (UIStaticData m) st, StateDataTrans st ~ 'Static) => HandleUIResp' m st 'Static where
+  handleUIResp' _stStrans (UIStData _ _uiCard _) uiRespRcvd = do
+    uiRsp <- uiResp uiRespRcvd
+    let uiCard = getStCard (Proxy @st)
+    v_newUIState <- request (ShowStatic uiCard) uiRespRcvd
+    let newUIState = variantToValue v_newUIState
+    return $ coerce $ UIStData newUIState uiCard uiRsp
+
+class HandleUIRespVar m sts where
+  handleUIRespVar :: Int -> UIDynData m -> StUIRespReceived m UI "ui" -> m (V sts)
+
+instance (TaskPoster m ,HandleUIResp m st) => HandleUIRespVar m '[st] where
+  handleUIRespVar _index dd respReceived = variantFromValue <$> handleUIResp dd respReceived
+
+instance 
+  ( TaskPoster m 
+  , HandleUIRespVar m '[st]
+  , HandleUIRespVar m (st1 ': sts)
+  , Liftable '[st] (st ': st1 ': sts)
+  , Liftable (st1 ': sts) (st ': st1 ': sts)
+  ) => HandleUIRespVar m (st ': st1 ': sts) where
+  handleUIRespVar 0 dd respReceived = do 
+    (v_st :: V '[st]) <- handleUIRespVar 0 dd respReceived
+    return $ liftVariant v_st 
+  handleUIRespVar indx dd respReceived = do 
+    (v_st1sts :: V (st1 ': sts)) <- handleUIRespVar (indx - 1) dd respReceived
+    return $ liftVariant v_st1sts 
+
+transFromUIDynData :: forall m sts. 
+  ( HandleUIRespVar m sts
   , TaskPoster m
-  ) => UICard -> (V ys -> m ()) -> m ()
-transFromUIResp uiCard respToStates cbFunc =
-  void $ next uiCard (\uiRespReceived -> do
-      let index = uiRespIndex uiCard uiRespReceived
-          v_ys = unVar $ createFrom (IndexedPar index uiRespReceived)
-      cbFunc v_ys
+  ) => UIDynData m -> (V sts -> m ()) -> m ()
+transFromUIDynData uiDynData cbFunc = do
+  let uiDynSt :: UIDyn m
+      uiDynSt = curUIState uiDynData
+  void $ next uiDynSt (\uiRespReceivedVar -> do
+      let respReceived =  variantToValue uiRespReceivedVar
+      uiRsp <- uiResp respReceived
+      let  userChoiceIndex = uiRespIndex (curUICard uiDynData) uiRsp
+      v_sts <- handleUIRespVar userChoiceIndex uiDynData respReceived    
+      cbFunc v_sts
       return True)
 
+uiTrans :: (HandleUIRespVar m sts, TaskPoster m, Coercible a (UIDynData m)) => a -> (V sts -> m ()) -> m ()
+uiTrans = transFromUIDynData . coerce
+
+newResFromUIData :: forall resParams m initUIReq initResState a.
+  ( Coercible resParams UIParams
+  , TaskPoster m 
+  , GetStCard initResState
+  , ShowReqForTrans (StateDataTrans initResState) initUIReq
+  , Request m initUIReq (St (UIInitialized m UI) "ui")
+  , ReqResult initUIReq (St (UIInitialized m UI) "ui") ~ '[a]
+  , Coercible (UIStData a) initResState) => resParams -> m initResState
+newResFromUIData resParams = do
+  let uiCard = getStCard (Proxy @initResState)
+  uiResPar <- uiResParams resParams
+  uiInitilized <- fmap (stFromName #ui) (mkRes uiResPar)
+  uiShowing <- request ((showReqForTrans (Proxy @(StateDataTrans initResState))) uiCard) uiInitilized
+  return  $ coerce (UIStData (variantToValue uiShowing) uiCard emptyUIResp) 
+
+class ShowReqForTrans (stTrans :: StateTransKind) showReq | stTrans -> showReq where
+  showReqForTrans :: Proxy stTrans -> UICard -> showReq
+
+instance ShowReqForTrans 'Static ShowStatic where
+  showReqForTrans _ = ShowStatic
+
+instance ShowReqForTrans 'Dynamic ShowDyn where
+  showReqForTrans _ = ShowDyn
+
+termUIData :: (TaskPoster m) => UIStaticData m -> m ()
+termUIData uiState = (variantToValue <$> request ShutdownUI (curUIState uiState)) >>= terminate 
+
+termUI :: (TaskPoster m, Coercible (UIStaticData m) st) => st -> m ()
+termUI = termUIData . coerce
+
+class ReqUI1 m curUISt st  where
+  reqUI1 :: UIStData curUISt -> m (V '[st])
+
+instance (ReqUI1' m curUISt st (StateDataTrans st)) => ReqUI1 m curUISt st where
+  reqUI1 = reqUI1' (Proxy @(StateDataTrans st))
+
+class ReqUI1' m curUISt st (nextUISt :: StateTransKind) where
+  reqUI1' :: Proxy nextUISt -> UIStData curUISt -> m (V '[st])
+
+instance (GetStCard st, Request m ShowDyn curUISt, Coercible (UIDynData m) st, ReqResult ShowDyn curUISt ~ '[UIDyn m]) => ReqUI1' m curUISt st 'Dynamic where
+  reqUI1' _ curStData = do
+    let card = getStCard (Proxy @st)
+    nextUISt <- variantToValue <$> request (ShowDyn card) (curUIState curStData)
+    return $ variantFromValue $ coerce (UIStData nextUISt card emptyUIResp)
+
+instance (GetStCard st, Request m ShowStatic curUISt, Coercible (UIStaticData m) st, ReqResult ShowStatic curUISt ~ '[UIStatic m]) => ReqUI1' m curUISt st 'Static where
+  reqUI1' _ curStData = do
+    let card = getStCard (Proxy @st)
+    nextUISt <- variantToValue <$> request (ShowStatic card) (curUIState curStData)
+    return $ variantFromValue $ coerce (UIStData nextUISt card emptyUIResp)
+
+{-  
+reqUI1 :: (GetStCard st) => uiReq -> uiRes -> m (V '[st]) 
+reqUI1 uiReq uiRes = do
+  newUIState <- request uiReq uiRes
+  return $ coerceVar newUIState 
+-}
+
+
+---
+getTextFromResp :: UIStData st -> Text -> Text
+getTextFromResp uiStData txt = getFormTextRes (prevUIResp uiStData) txt
+
+getNumFromResp :: UIStData st -> Text -> Int
+getNumFromResp uiStData txt = getFormNumRes (prevUIResp uiStData) txt 
+
+getBoolFromResp :: UIStData st -> Text -> Bool
+getBoolFromResp uiStData txt = getFormBoolRes (prevUIResp uiStData) txt 
+
+{-
+data NoticeBarD (msg :: Symbol)
+data ButtonD (btnCaption :: Symbol)   
+data ButtonsBarD (buttons :: [*]) 
+-}

@@ -34,7 +34,6 @@ module  EntranceDoor where
 import           Protolude                    hiding (Product, Any, handle, return, gets, lift, liftIO,
                                                (>>), (>>=), forever, until,try,on)
 import           Beseder.Base.ControlData
-import           Beseder.Base.Common                                               
 import           Beseder.Resources.Timer
 import           Beseder.Resources.Monitor
 import           Beseder.Resources.Switch
@@ -60,7 +59,6 @@ type InitState m doorSw monRes fobMon
           ( StBinMonitorOff m monRes "outDet",  
           ( StWaitForEvent  m fobMon "fobReader")))) 
        ]
-
 
 fobRes :: SDUIContext ->Beseder.Resources.Monitor.EventMonitorRes.ResPar TaskQ UIEvMonitor
 fobRes ctx = MkUIEvMonitor (UIParams ctx (EntryID "fob") (EntryTitle "Fob Reader"))

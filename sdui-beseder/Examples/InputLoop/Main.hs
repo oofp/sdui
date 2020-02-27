@@ -11,7 +11,8 @@ import            Pipes ((>->))
 import qualified  Pipes.Concurrent as PC
 import qualified  Pipes
 import            Control.Concurrent.STM.TChan
-import            EntranceDoor
+import qualified  InputLoopApp
+import qualified  InputLoopTimerApp
 
 newClientHandler :: (SDUIContext -> IO ()) -> NewClientCallback ClientResp ServerReq
 newClientHandler appTask (input, output) = void $ async $ do
@@ -43,10 +44,6 @@ main = do
   cancel httpTask
 
 appLauncher :: SDUIContext -> IO () 
-appLauncher sduiCtx = runUiDoor sduiCtx
+appLauncher sduiCtx = InputLoopTimerApp.runInputs sduiCtx
 
----
---main :: IO ()
---main = do
---    putStrLn ("Visit http://localhost:8000/ for try the app" :: Text)
-
+-- stack build sdui-beseder:exe:sdui-input-loop

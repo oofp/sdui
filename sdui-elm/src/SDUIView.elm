@@ -136,7 +136,10 @@ viewInputItem updateFormMsgFunc formParams entryID inputType =
         inpType inputType
             [ Input.id entryID
             , Input.value (findFormEntryResText entryID formParams)
-            , Input.onInput (\txt -> updateFormMsgFunc entryID (TextRes txt))  
+            , Input.onInput (\txt -> 
+                if inputType == Number
+                    then updateFormMsgFunc entryID (IntRes (String.toInt txt |> Maybe.withDefault 0)) 
+                    else updateFormMsgFunc entryID (TextRes txt))  
             ]
 
 viewSelectItems : (String -> FormItemRes ->  msg) -> FormParams -> String -> List SelectItem -> Html msg
