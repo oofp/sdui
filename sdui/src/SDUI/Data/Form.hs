@@ -67,6 +67,14 @@ data FormParams = FormParams
   , formButtons :: [Button]
   } deriving (Show, Eq)
 
+instance Semigroup FormParams where
+  f1 <> f2 = FormParams (formEntries f1 <> formEntries f2) 
+                        (formEntriesResps f1 <> formEntriesResps f2)
+                        (formButtons f1 <> formButtons f2)
+
+instance Monoid FormParams where
+  mempty = FormParams mempty mempty mempty
+
 respForItem :: FormItem -> FormItemRes
 respForItem (RadioList _) = TextRes ""
 respForItem (CheckBox _) = BoolRes False

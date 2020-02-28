@@ -324,14 +324,6 @@ instance (GetStCard st, Request m ShowStatic curUISt, Coercible (UIStaticData m)
     nextUISt <- variantToValue <$> request (ShowStatic card) (curUIState curStData)
     return $ variantFromValue $ coerce (UIStData nextUISt card emptyUIResp)
 
-{-  
-reqUI1 :: (GetStCard st) => uiReq -> uiRes -> m (V '[st]) 
-reqUI1 uiReq uiRes = do
-  newUIState <- request uiReq uiRes
-  return $ coerceVar newUIState 
--}
-
-
 ---
 getTextFromResp :: UIStData st -> Text -> Text
 getTextFromResp uiStData txt = getFormTextRes (prevUIResp uiStData) txt
