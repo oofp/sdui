@@ -45,9 +45,7 @@ import           Data.String
 import           Beseder.Misc.Misc
 import           Beseder.SDUI.SDUIContext
 import           SDUI.Data.SDUIData
-import           Beseder.SDUI.SDUIRes
 import           Beseder.SDUI.SDUIResImpl
-import           Beseder.SDUI.SDUIHelper
 import           EntranceDoorHnd
 import           GHC.Exts (Any)    
 

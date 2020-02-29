@@ -183,23 +183,23 @@ instance KnownSymbol (StateTitle st) => GetStCard' st 'Static where
 class GetDynCard st where
   getDynCard :: Proxy st -> UICard
 
-instance (StateDataTrans st ~ 'Dynamic, GetStatesForm (NextDataStates st)) => GetDynCard st where
-  getDynCard _p_st = Form $ getStatesForm (Proxy @(NextDataStates st))     
+instance (StateDataTrans st ~ 'Dynamic, KnownSymbol (StateTitle st), GetStatesForm (NextDataStates st)) => GetDynCard st where
+  getDynCard _p_st = Form $ getStatesForm  (Proxy @(NextDataStates st)) (FormParams [] [] [] (Just (pack (symbolVal (Proxy @(StateTitle st))))))     
 
 class GetStatesForm (sts :: [*]) where
-  getStatesForm :: Proxy sts ->  FormParams
+  getStatesForm :: Proxy sts -> FormParams -> FormParams
 
 instance GetStatesForm '[] where
-  getStatesForm _px_sts = mempty
+  getStatesForm _px_sts formParams = formParams
 
 instance (GetFormEntries st , KnownSymbol (StateTitle st), GetStatesForm sts) => GetStatesForm (st ': sts) where
-  getStatesForm _px_sts = 
+  getStatesForm _px_sts formParams = 
     let stName :: Text
         stName = pack $ symbolVal (Proxy @(StateTitle st))
         entries = getFormEntris (Proxy @st)
         resps = respForEntries entries
         btn = [Button stName stName Info]
-    in (FormParams entries resps btn) <> getStatesForm (Proxy @sts) 
+    in getStatesForm  (Proxy @sts) (formParams <> (FormParams entries resps btn Nothing)) 
 
 data UIStData dynOrStatic = UIStData 
   { curUIState :: dynOrStatic

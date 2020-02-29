@@ -60,7 +60,7 @@ askUI prompt = do
     let entries = [ FormEntry "inpText" (FormGroup (FormGroupParams (Just prompt) (Input Form.Text) Nothing))]
         resps = respForEntries entries
         btns = [Button "Submit" "Submit"  Style.Success]            
-        uiCard = Form $ FormParams entries resps btns 
+        uiCard = Form $ FormParams entries resps btns Nothing 
     rsp <- uiReq uiCard
     case rsp of
         FormResp (FormRespParams _ [FormEntryRes _ (TextRes txt)]) -> return txt

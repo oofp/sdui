@@ -20,7 +20,7 @@ mkStaticBar txt = StaticBar $ StaticBarParams txt
 uiRespIndex :: UICard -> UIResp -> Int
 uiRespIndex (ButtonBar (ButtonBarParams _ buttons)) (ButtonClickedResp respText) = 
     fromMaybe 0 (findIndex (\btn -> btnId btn == respText) buttons) 
-uiRespIndex (Form (FormParams _ _ buttons)) (FormResp (FormRespParams buttonClicked _ )) = 
+uiRespIndex (Form (FormParams _ _ buttons _)) (FormResp (FormRespParams buttonClicked _ )) = 
     fromMaybe 0 (findIndex (\btn -> btnId btn == buttonClicked) buttons) 
 
 getFormRes :: UIResp -> Text -> Maybe FormItemRes

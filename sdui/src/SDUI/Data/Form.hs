@@ -65,15 +65,17 @@ data FormParams = FormParams
   { formEntries :: [FormEntry]
   , formEntriesResps :: [FormEntryRes] 
   , formButtons :: [Button]
+  , formTitle :: Maybe Text
   } deriving (Show, Eq)
 
 instance Semigroup FormParams where
   f1 <> f2 = FormParams (formEntries f1 <> formEntries f2) 
                         (formEntriesResps f1 <> formEntriesResps f2)
                         (formButtons f1 <> formButtons f2)
+                        (formTitle f1 <|> formTitle f2)
 
 instance Monoid FormParams where
-  mempty = FormParams mempty mempty mempty
+  mempty = FormParams mempty mempty mempty Nothing
 
 respForItem :: FormItem -> FormItemRes
 respForItem (RadioList _) = TextRes ""

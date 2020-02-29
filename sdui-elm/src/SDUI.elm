@@ -291,14 +291,16 @@ type alias FormParams  =
    { formEntries: (List FormEntry)
    , formEntriesResps: (List FormEntryRes)
    , formButtons: (List Button)
+   , formTitle: (Maybe String)
    }
 
 jsonDecFormParams : Json.Decode.Decoder ( FormParams )
 jsonDecFormParams =
-   Json.Decode.succeed (\pformEntries pformEntriesResps pformButtons -> {formEntries = pformEntries, formEntriesResps = pformEntriesResps, formButtons = pformButtons})
+   Json.Decode.succeed (\pformEntries pformEntriesResps pformButtons pformTitle -> {formEntries = pformEntries, formEntriesResps = pformEntriesResps, formButtons = pformButtons, formTitle = pformTitle})
    |> required "formEntries" (Json.Decode.list (jsonDecFormEntry))
    |> required "formEntriesResps" (Json.Decode.list (jsonDecFormEntryRes))
    |> required "formButtons" (Json.Decode.list (jsonDecButton))
+   |> fnullable "formTitle" (Json.Decode.string)
 
 jsonEncFormParams : FormParams -> Value
 jsonEncFormParams  val =
@@ -306,6 +308,7 @@ jsonEncFormParams  val =
    [ ("formEntries", (Json.Encode.list jsonEncFormEntry) val.formEntries)
    , ("formEntriesResps", (Json.Encode.list jsonEncFormEntryRes) val.formEntriesResps)
    , ("formButtons", (Json.Encode.list jsonEncButton) val.formButtons)
+   , ("formTitle", (maybeEncode (Json.Encode.string)) val.formTitle)
    ]
 
 
@@ -510,5 +513,4 @@ jsonDecClientResp =
 jsonEncClientResp : ClientResp -> Value
 jsonEncClientResp (ClientResp v1 v2 v3) =
     Json.Encode.list identity [jsonEncEntryID v1, jsonEncReqID v2, jsonEncUIResp v3]
-
 

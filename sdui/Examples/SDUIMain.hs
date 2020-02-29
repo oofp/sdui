@@ -41,7 +41,7 @@ serverReqProducer chan = do
                 , FormEntry "inpDate" (FormGroup (FormGroupParams (Just "Date:") (Input Form.Date) (Just "some date")))
                 ]
       resps = respForEntries entries            
-      form = Form $ FormParams entries resps btns
+      form = Form $ FormParams entries resps btns Nothing
       createFormEntry = CreateEntry (EntryID "form") (EntryTitle "First form") (ReqID 1) form 
   Pipes.yield createEntryReq
   Pipes.yield createEntryReq2
@@ -52,7 +52,7 @@ serverReqProducer chan = do
           case (entryID, uiResp) of 
             (EntryID "FooID1",_) -> btnBar2
             (EntryID "FooID1",_) -> btnBar 
-            (EntryID "form", FormResp formRespParams) -> Form $ FormParams entries (entriesRes formRespParams) btns
+            (EntryID "form", FormResp formRespParams) -> Form $ FormParams entries (entriesRes formRespParams) btns Nothing
     let newReq = ReplaceEntry entryID (ReqID $ reqID+1) nextCard
     Pipes.yield newReq
 

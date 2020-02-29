@@ -12,6 +12,7 @@ import Bootstrap.Card as Card
 import Bootstrap.Utilities.Spacing as Spacing
 import Bootstrap.Card.Block as Block
 import Bootstrap.Spinner as Spinner
+import Bootstrap.Badge as Badge
 import Bootstrap.Form as Form
 import Bootstrap.Form.Input as Input
 import Bootstrap.Form.Select as Select
@@ -62,10 +63,16 @@ viewEntryContent respMsgFunc updateFormMsgFunc sduiEntry =
             text sbParams.staticBarNotice
 
         Just (Form formParams) -> -- add buttons
-            Form.form [] 
-                (List.map (viewFormEntry respMsgFunc updateFormMsgFunc formParams) formParams.formEntries ++
-                viewFormButtons respMsgFunc sduiEntry formParams.formButtons formParams)
+            Form.form []
+                <| List.concat
+                    [ viewFormTitle formParams.formTitle
+                    , List.map (viewFormEntry respMsgFunc updateFormMsgFunc formParams) formParams.formEntries
+                    , viewFormButtons respMsgFunc sduiEntry formParams.formButtons formParams
+                    ]
 
+viewFormTitle : Maybe String -> List (Html msg)
+viewFormTitle maybeTitle = maybeTitle |> Maybe.map (\title -> [ div [Spacing.mb2] [ Badge.badgePrimary [ ] [ text title ]]]) |> Maybe.withDefault []
+--viewFormTitle maybeTitle = maybeTitle |> Maybe.map (\title -> []) |> 
 
 viewBBButton : (ClientResp -> msg) -> SDUIEntry -> Button -> Html msg
 viewBBButton respMsgFunc sduiEntry bbButton = 
