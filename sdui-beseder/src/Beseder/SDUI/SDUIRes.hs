@@ -62,7 +62,7 @@ buildRes ''SDUIRes
 
 type instance TermRequest (StShowingDyn m res name) = ShutdownUI
 
-uiResp :: SDUIRes m res => StUIRespReceived m res name -> m UIResp
+uiResp :: forall res m name. SDUIRes m res => StUIRespReceived m res name -> m UIResp
 uiResp (St uiRespReceived) = _uiResp uiRespReceived
 
  

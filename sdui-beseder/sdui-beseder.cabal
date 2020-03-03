@@ -25,6 +25,7 @@ library
                      , Beseder.SDUI.SDUIRes
                      , Beseder.SDUI.SDUIResImpl
                      , Beseder.SDUI.SDUIHelper
+                     , Beseder.SDUI.SDUIResHelper
                      , Beseder.SDUI.Resources.UIEvMonitor
                      , Beseder.SDUI.Resources.UIBinMonitor
                      , Beseder.SDUI.Resources.UIBinSwitch

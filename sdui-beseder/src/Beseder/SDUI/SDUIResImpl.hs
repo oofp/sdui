@@ -140,3 +140,7 @@ shutdownUIData uiData = liftIO $ do
   senderFunc (uiCxt uiData) (DeleteEntry (EntryID (uiSessionID uiData)))  
   removeListener (uiCxt uiData) (EntryID (uiSessionID uiData))
   return (variantFromValue UIShutdown)  
+
+
+uiResp' :: forall m name. SDUIRes m UI => StUIRespReceived m UI name -> m UIResp
+uiResp' = uiResp
