@@ -42,6 +42,9 @@
 module Beseder.SDUI.SDUIResHelper 
   ( uiInteract
   , getOptionVar
+  , uiUnit
+  , uiBool
+  , uiShowText
   ) where
 
 import           Protolude                    hiding (Product, handle, return, gets, lift, liftIO,
@@ -59,7 +62,7 @@ import           Beseder.Utils
 uiInteract :: forall uiResName m sp. (TaskPoster m) =>  Named uiResName -> UICard -> STransData m sp _ UIResp
 uiInteract uiName uiCard = do
   invoke uiName (ShowDyn uiCard)
-  skipTo @(uiResName :? UIRespReceived)
+  skipTo @(uiResName :? IsUIRespReceived)
   opRes uiName uiResp'  
 
 
@@ -69,3 +72,19 @@ getOptionVar uiName prompt px = do
   rsp <- uiInteract uiName btnBar
   let respIndex = uiRespIndex btnBar rsp
   return $ getVarInstance respIndex
+
+uiUnit :: forall uiResName m sp. (TaskPoster m) => Named uiResName -> Text -> Text -> STransData m sp _ ()
+uiUnit uiName prompt ackButton = do
+  let btnBar = mkBtnBar prompt [ackButton]
+  _rsp <- uiInteract uiName btnBar
+  return ()
+
+uiBool :: forall uiResName m sp. (TaskPoster m) => Named uiResName -> Text -> Text -> Text -> STransData m sp _ Bool
+uiBool uiName prompt yesButton noButton = do
+  let btnBar = mkBtnBar prompt [yesButton,noButton]
+  rsp <- uiInteract uiName btnBar
+  let respIndex = uiRespIndex btnBar rsp
+  return (respIndex == 0)
+
+uiShowText :: forall uiResName m sp. (TaskPoster m) => Named uiResName -> Text -> STransData m sp _ ()
+uiShowText uiName txt = invoke uiName (ShowStatic $ mkStaticBar txt)
