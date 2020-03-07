@@ -45,13 +45,13 @@ module Beseder.SDUI.SDUIResHelper
   , uiUnit
   , uiBool
   , uiShowText
+  , getUIResp
   ) where
 
 import           Protolude                    hiding (Product, handle, return, gets, lift, liftIO,
                                               (>>), (>>=), forever, until,try,on)
 import           Beseder.Base.Common
 import           Beseder.Base.ControlData
-import           Beseder.SDUI.SDUIResImpl
 import           Beseder.SDUI.SDUIRes
 import           SDUI.Data.SDUIData 
 --import           SDUI.Data.Style
@@ -63,8 +63,7 @@ uiInteract :: forall uiResName m sp. (TaskPoster m) =>  Named uiResName -> UICar
 uiInteract uiName uiCard = do
   invoke uiName (ShowDyn uiCard)
   skipTo @(uiResName :? IsUIRespReceived)
-  opRes uiName uiResp'  
-
+  getUIResp uiName 
 
 getOptionVar :: forall uiResName m sp options. (TaskPoster m, ListNames options, GetVarInstance options) => Named uiResName -> Text -> Proxy options -> STransData m sp _ (V options)
 getOptionVar uiName prompt px = do
@@ -88,3 +87,6 @@ uiBool uiName prompt yesButton noButton = do
 
 uiShowText :: forall uiResName m sp. (TaskPoster m) => Named uiResName -> Text -> STransData m sp _ ()
 uiShowText uiName txt = invoke uiName (ShowStatic $ mkStaticBar txt)
+
+getUIResp :: forall uiResName m sp. (TaskPoster m) => Named uiResName -> STransData m sp (GetPropFunc uiResName UIRespProp) UIResp 
+getUIResp uiResName = prop @UIRespProp uiResName 

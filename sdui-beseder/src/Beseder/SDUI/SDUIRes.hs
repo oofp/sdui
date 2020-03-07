@@ -25,6 +25,9 @@ newtype ShowDyn = ShowDyn UICard deriving (Eq, Show)
 newtype ShowStatic = ShowStatic UICard deriving (Eq, Show)
 data ShutdownUI = ShutdownUI deriving (Eq, Show)
   
+data UIRespProp
+type instance PropType UIRespProp = UIResp   
+
 instance GetInstance ShutdownUI where getInstance = ShutdownUI
 
 class Monad m => SDUIRes m res where
@@ -56,13 +59,14 @@ class Monad m => SDUIRes m res where
 
   termShutdown :: TermDef m (UIShutdown m res)
 
-  _uiResp :: UIRespReceived m res -> m UIResp
+  _uiResp :: UIRespReceived m res -> UIResp
   
 buildRes ''SDUIRes
 
 type instance TermRequest (StShowingDyn m res name) = ShutdownUI
 
 uiResp :: forall res m name. SDUIRes m res => StUIRespReceived m res name -> m UIResp
-uiResp (St uiRespReceived) = _uiResp uiRespReceived
+uiResp (St uiRespReceived) = return $ _uiResp uiRespReceived
 
- 
+instance SDUIRes m res => Property  (StUIRespReceived m res name) UIRespProp where
+  getProp (St uiRespReceived) _px = _uiResp uiRespReceived

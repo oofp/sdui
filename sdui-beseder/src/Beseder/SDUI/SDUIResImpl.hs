@@ -92,7 +92,7 @@ instance TaskPoster m => SDUIRes m UI where
 
   termShutdown UIShutdown = return ()
 
-  _uiResp (UIRespReceived _uiData uiRsp) = return uiRsp 
+  _uiResp (UIRespReceived _uiData uiRsp) = uiRsp 
 
   {-
   initUI :: MkResDef m (ResPar m UI) (UIInitialized m UI)
